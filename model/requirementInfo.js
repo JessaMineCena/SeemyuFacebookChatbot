@@ -1,23 +1,27 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var scholarshipInfo = new Schema({
-    scholarshipTitle: {
-        type: String,
-        required: true
-    },
-    scholarshipDescription: {
-        type: String,
-        required: true
-    },
+var requirementInfo = new Schema ({
     informationType: {
         type: String,
         required: true
     },
+    deadlineDate: {
+        type: Date,
+        required: false
+    },
+    requirementTitle: {
+        type: String,
+        required: true
+    },
+    requirementList:[{
+        type: String,
+        required: true
+    }],
     accessCode: {
         type: String,
         required: true
     }
 });
 
-module.exports = mongoose.model('scholarshipInfo', scholarshipInfo);
+module.exports = mongoose.model('requirementInfo', requirementInfo);

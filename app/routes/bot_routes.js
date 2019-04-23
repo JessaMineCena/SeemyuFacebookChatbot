@@ -19,21 +19,100 @@ module.exports = function(app, db) {
             } else {
                 res.send(result.ops[0]);
             }
-        })        
+        });      
     });
 
     // GET OR READ STARTS HERE
     
+    //READ all Documents per Collection
+    app.get('/notes', (req, res) => {
+        
+        db.db().collection('notes').find({}).toArray(function(err, docs){
+            if (err) {
+                handleError(res, err.message, "Failed to get notes.");
+              } else {
+                res.status(200).json(docs);
+              }
+        });
+    });
     
+    app.get('/scholarship',(req, res) =>{
+        db.db().collection('scholarships').find({}).toArray(function(err, docs){
+            if(err){
+                handleError(res, err.message, "Failed to get scholarship collection.");
+            }else{
+                res.status(200).json(docs);
+            }
+        });
+        
+    });
+
+    app.get('/event', (req, res) =>{
+        db.db().collection('events').find({}).toArray(function(err, docs){
+            if(err){
+                handleError(res, err.message, "Failed to get event collection.");
+            }else{
+                res.status(200).json(docs);
+            }
+        });
+    });
+
+    app.get('/requirement', (req, res) =>{
+        db.db().collection('requirements').find({}).toArray(function(err, docs){
+            if(err){
+                handleError(res, err.message, "Failed to get requirement collection.");
+            }else{
+                res.status(200).json(docs);
+            }
+        });
+    });
+
+    app.get('/processes', (req, res) =>{
+        db.db().collection('processes').find({}).toArray(function(err, docs){
+            if(err){
+                handleError(res, err.message, "Failed to get process collection.");
+            }else{
+                res.status(200).json(docs);
+            }
+        });
+    });
+
+    app.get('/studentHousing', (req, res) =>{
+        db.db().collection('/studentHousing').find({}).toArray(function(err, docs){
+            if(err){
+                handleError(res, err.message, "Failed to get student housing collection.");
+            }else{
+                res.status(200).json(docs);
+            }
+        });
+    });
+
+    //GET SPECIFIC per ID
+
+    var ObjectID = require('mongodb').ObjectID;
+
+    app.get('/notes/:id', (req, res) => {
+        const id = req.params.id //from the url ID  
+        const details = {'_id': new ObjectID(id)};
+        db.db().collection('notes').findOne(details, (err, item) =>{
+            if(err) {
+                res.send({ 'error' : 'An error has occured. Cannot create document'});
+
+            } else {
+                res.send(item);
+            }
+        });
+    });
 
     // POST OR CREATE STARTS HERE
+    //WEBHOOK REQUEST GAMIT DIRIIIII
     app.post('/scholarship', (req, res) => {
         const scholarship = {scholarshipTitle: req.body.scholarshipTitle, scholarshipDescription: req.body.scholarshipDescription,
         processType: req.body.processType, accessCode: req.body.accessCode};
         
         if(req.body.accessCode == "admin123")
         {
-            db.db().collection('/scholarships').insert(scholarship, (err, result) => {
+            db.db().collection('scholarships').insert(scholarship, (err, result) => {
                 if(err) {
                     res.send({ 'error': 'An error has occured. Cannot create document for Scholarship. '});
                 } else {
@@ -55,7 +134,7 @@ module.exports = function(app, db) {
 
         if(req.body.accessCode == "admin123")
         {
-            db.db().collection('/events').insert(event, (err, result) => {
+            db.db().collection('events').insert(event, (err, result) => {
                 if(err) {
                     res.send({ 'error': 'An error has occured. Cannot create document for an Event. '});
                 } else {
@@ -75,7 +154,7 @@ module.exports = function(app, db) {
 
         if(req.body.accessCode == "admin123")
         {
-            db.db().collection('/requirements').insert(requirement, (err, result) => {
+            db.db().collection('requirements').insert(requirement, (err, result) => {
                 if(err){
                     res.send({ 'error': 'An error has occured. Cannot create document for requirement. '});
                 } else {
@@ -95,7 +174,7 @@ module.exports = function(app, db) {
 
         if(req.body.accessCode == "admin123")
         {
-            db.db().collection('/requirements').insert(requirement, (err, result) => {
+            db.db().collection('processes').insert(requirement, (err, result) => {
                 if(err){
                     res.send({'error': 'An Error has occured. Cannot create document for a process.'});
                 } else {
