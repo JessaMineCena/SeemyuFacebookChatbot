@@ -23,6 +23,12 @@ module.exports = function(app, db) {
         });      
     });
 
+    function dateToISO(dateOriginal)
+    {
+        var date = dateOriginal;
+        var dateObject = new Date(date);
+        return dateObject;
+    }
     // GET OR READ STARTS HERE
     
     //READ all Documents per Collection
@@ -82,8 +88,9 @@ module.exports = function(app, db) {
                     }
     
             } else if (req.body.informationType == "event") {
-    
-                const event = {informationType: req.body.informationType, eventTitle: req.body.eventTitle, eventDateTime: req.body.eventDateTime, 
+                
+                const event = {informationType: req.body.informationType, eventTitle: req.body.eventTitle,
+                    eventDateTime: {startDate: dateToISO(req.body.startDate), endDate: dateToISO(req.body.endDate)}, 
                     eventLocation: req.body.eventLocation, eventDetails: req.body.eventDetails, 
                     accessCode: req.body.accessCode};
         
@@ -178,18 +185,38 @@ module.exports = function(app, db) {
                 }
                 else if(req.body.informationType == "event")
                 {
-                    //THIS WHERE I STOPPED. 
-                    //QUERY WHERE
-                    var dateEvent = req.body.eventDateTime;
+                    
+                    if((req.body.startDate !== null && req.body.endDate !== null) || req.body.eventLocation !== null)
+                    {
+                    var dateEventStart = req.body.startDate;
+                    var dateEventEnd = req.body.endDate;
                     var locationEvent = req.body.eventLocation;
-                    var query = "{$where:function(){return this.eventDateTime =="+locationEvent+"}}";
-                    db.db().collection('events').find(query).toArray(function(err, docs){
+                    var sampleNi = "2019-12-01T12:00:00+09:00";
+                    
+
+                    db.db().collection('events').find({
+                        $or:[
+                          {eventDateTime:{
+                            startDate: {
+                                "$gte": dateToISO(dateEventStart),
+                                "$lte": dateToISO(dateEventEnd)
+                            },
+                            endDate:{
+                                "$gte": dateToISO(dateEventStart),
+                                "$lte": dateToISO(dateEventEnd)
+                            }
+                        }},
+                          {eventLocation:locationEvent}
+                        ]
+                      }).toArray(function(err, docs){
                         if(err){
                             handleError(res, err.message, "Failed to get event collection.");
                         }else{
                             res.status(200).json(docs);
                         }
                     });
+                    }
+                    
                 }
                 else if(req.body.informationType == "process")
                 {
