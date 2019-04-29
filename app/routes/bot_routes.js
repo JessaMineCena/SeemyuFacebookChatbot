@@ -65,104 +65,238 @@ module.exports = function(app, db) {
     //WEBHOOK REQUEST GAMIT DIRIIIII
     app.post('/webhook', (req, res) => {
 
-        
-        if (req.body.accessCode != null) {
+        console.log("recieve post request.");
+        if (req.body.queryResult.parameters.accessCode != null) {
             //MGA POST DIRI, IN SHORT, PARA ADMIN
-            if (req.body.informationType == "scholarship") {
-                const scholarship = {scholarshipTitle: req.body.scholarshipTitle, scholarshipDescription: req.body.scholarshipDescription,
-                    informationType: req.body.informationType, accessCode: req.body.accessCode};
+            if (req.body.queryResult.parameters.informationType == "scholarship") {
+                const scholarship = {scholarshipTitle: req.body.queryResult.parameters.scholarshipTitle,
+                scholarshipDescription: req.body.queryResult.parameters.scholarshipDescription,
+                informationType: req.body.queryResult.parameters.informationType, 
+                accessCode: req.body.queryResult.parameters.accessCode};
                    
-                    if(req.body.accessCode == "admin123")
+                    if(req.body.queryResult.parameters.accessCode == "admin123")
                     {
                         db.db().collection('scholarships').insertOne(scholarship, (err, result) => {
                             if(err) {
-                                res.send({ 'error': 'An error has occured. Cannot create document for Scholarship. '});
+                               // res.send({ 'error': 'An error has occured. Cannot create document for Scholarship. '});
+                                return res.json({
+                                    "fulfillmentText":"An error has occured. Cannot create document for Scholarship."
+                                });
                             } else {
-                                res.send(result.ops[0]);
-                                //NAA PANIY DUGANG FOR OUTPUT
+                                //res.send(result.ops[0]);
+                                var scholarshipTitle = result.ops[0].scholarshipTitle;
+                                var scholarshipDescription = result.ops[0].scholarshipDescription;
+
+                                return res.json({
+                                    "fulfillmentText" : "Okay, got it! You added a scholarship information which is " + scholarshipTitle +
+                                    " with a description: " + scholarshipDescription
+                                });
+
                             }
                         }) 
                     }else 
                     {
-                        res.send("Sorry I can't add that, you've got a wrong access code.");
+                        return res.json({
+                            "fulfillmentText":"Sorry I cannot add that, you've got a wrong access code."
+                        });
                     }
     
-            } else if (req.body.informationType == "event") {
+            } else if (req.body.queryResult.parameters.informationType == "event") {
                 
-                const event = {informationType: req.body.informationType, eventTitle: req.body.eventTitle,
-                    eventDateTime: {startDate: dateToISO(req.body.startDate), endDate: dateToISO(req.body.endDate)}, 
-                    eventLocation: req.body.eventLocation, eventDetails: req.body.eventDetails, 
-                    accessCode: req.body.accessCode};
+                const event = {informationType: req.body.queryResult.parameters.informationType, 
+                    eventTitle: req.body.queryResult.parameters.eventTitle,
+                    eventDateTime: {startDate: dateToISO(req.body.queryResult.parameters.eventDateTime.startTime), 
+                    endDate: dateToISO(req.body.queryResult.parameters.eventDateTime.endTime)}, 
+                    eventLocation: req.body.queryResult.parameters.eventLocation, 
+                    eventDetails: req.body.queryResult.parameters.eventDetails,  accessCode: req.body.queryResult.parameters.accessCode };
         
-                if(req.body.accessCode == "admin123")
+                if(req.body.queryResult.parameters.accessCode == "admin123")
                 {
                     db.db().collection('events').insertOne(event, (err, result) => {
                         if(err) {
-                            res.send({ 'error': 'An error has occured. Cannot create document for an Event. '});
+                            //res.send({ 'error': 'An error has occured. Cannot create document for an Event. '});
+                            return res.json({
+                                "fulfillmentText":"An error has occured. Cannot create document for an Event."
+                            });
                         } else {
-                            res.send(result.ops[0]);
-                            //NAA PANIY DUGANG FOR OUTPUT
+                            //res.send(result.ops[0]);
+                            var eventTitle = result.ops[0].eventTitle;
+                            var eventStart = result.ops[0].eventDateTime.startDate;
+                            var eventEnd = result.ops[0].eventDateTime.endDate;
+                            var eventLocation = result.ops[0].eventLocation;
+                            var eventDetails = result.ops[0].eventDetails;
+
+                            return res.json({
+                                "fulfillmentText": "Okay, got it! You added an event named " + eventTitle +
+                                " that will be held on " + eventStart + " to " + eventEnd + " at " + eventLocation +
+                                ". the details added for the event: " + eventDetails 
+                            });
                         }
                     })
                 }else 
                 {
-                    res.send("Sorry I can't add that, you've got a wrong access code.");
+                    return res.json({
+                        "fulfillmentText":"Sorry I cannot add that, you've got a wrong access code."
+                    });
                 }
     
-            } else if (req.body.informationType == "requirement") {
-                const requirement = {processType: req.body.processType, requirementTitle: req.body.requirementTitle,
-                    requirementList: req.body.requirementList, accessCode: req.body.accessCode};
+            } else if (req.body.queryResult.parameters.informationType == "requirements") {
+
+                var requirement;
+                if(req.body.queryResult.parameters.deadlineDate != null)
+                {
+                    requirement = {informationType: req.body.queryResult.parameters.informationType, 
+                        requirementTitle: req.body.queryResult.parameters.requirementTitle,
+                        requirementList: req.body.queryResult.parameters.requirementsList, 
+                        accessCode: req.body.queryResult.parameters.accessCode,
+                        deadlineDate: dateToISO(req.body.queryResult.parameters.deadlineDate)
+                    };
+                }else {
+                    requirement = {informationType: req.body.queryResult.parameters.informationType, 
+                        requirementTitle: req.body.queryResult.parameters.requirementTitle,
+                        requirementList: req.body.queryResult.parameters.requirementsList, 
+                        accessCode: req.body.queryResult.parameters.accessCode
+                    };
+                }
+                
         
-                if(req.body.accessCode == "admin123")
+                if(req.body.queryResult.parameters.accessCode == "admin123")
                 {
                     db.db().collection('requirements').insertOne(requirement, (err, result) => {
                         if(err){
-                            res.send({ 'error': 'An error has occured. Cannot create document for requirement. '});
+                            //res.send({ 'error': 'An error has occured. Cannot create document for requirement. '});
+                            return res.json({
+                                "fulfillmentText": "An error has occured. Cannot create document for requirement information."
+                            })
                         } else {
-                            res.send(result.ops[0]);
-                            //NAA PANIY DUGANG FOR OUTPUT
-                        }
-                    })
-                }
-    
-            } else if (req.body.informationType == "process") {
-                const process = {processType: req.body.processType, processTitle: req.body.processTitle, 
-                    processDescription: req.body.processDescription, processList: req.body.processes, accessCode: req.body.accessCode};
-        
-                if(req.body.accessCode == "admin123")
-                {
-                    db.db().collection('processes').insertOne(requirement, (err, result) => {
-                        if(err){
-                            res.send({'error': 'An Error has occured. Cannot create document for a process.'});
-                        } else {
-                            res.send(result.ops[0]);
-                            //NAA PANIY DUGANG FOR OUTPUT
+                            //res.send(result.ops[0]);
+                            var requirementTitle = result.ops[0].requirementTitle;
+                            var requirementsList = result.ops[0].requirementList;
+                            
+                            if (req.body.queryResult.parameters.deadlineDate != null)
+                            {
+                                var deadlineDate = result.ops[0].deadlineDate;
+                                return res.json({
+                                    "fulfillmentText": "Okay, got it! You added a requirement information which is for "+
+                                    requirementTitle + " which have the following requirements: " + requirementsList +
+                                    " and deadline is on " + deadlineDate
+                                })
+                            } else {
+                                return res.json({
+                                    "fulfillmentText": "Okay, got it! You added a requirement information which is for "+
+                                    requirementTitle + " which have the following requirements: " + requirementsList   
+                                })
+                            }
+                            
                         }
                     })
                 }else 
                 {
-                    res.send("Sorry I cannot add that, you've got a wrong access code.");
+                    return res.json({
+                        "fulfillmentText":"Sorry I cannot add that, you've got a wrong access code."
+                    });
                 }
     
-            } else if (req.body.informationType == "housing") {
-                const studentHousing = {processType: req.body.processType, housingType: req.body.housingType,
-                    housingDetails: req.body.housingDetails, contactPerson: req.body.contactPerson, contactNumber: req.body.contactNumber,
-                    contactNumber: req.body.contactNumber, accessCode: req.body.accessCode};
+            } else if (req.body.queryResult.parameters.informationType == "process") {
+
+                var process;
+                if (req.body.queryResult.parameters.processDate != null)
+                {
+                    process = {informationType: req.body.queryResult.parameters.informationType, 
+                        processTitle: req.body.queryResult.parameters.processTitle,
+                        processList: req.body.queryResult.parameters.processList, 
+                        accessCode: req.body.queryResult.parameters.accessCode,
+                        processDate:{
+                            endDate: dateToISO(req.body.queryResult.parameters.processDate.endDate),
+                            startDate: dateToISO(req.body.queryResult.parameters.processDate.startDate)
+                        }};
+                } else {
+                    process = {informationType: req.body.queryResult.parameters.informationType, 
+                        processTitle: req.body.queryResult.parameters.processTitle, 
+                        processList: req.body.queryResult.parameters.processList, 
+                        accessCode: req.body.queryResult.parameters.accessCode};
+                }
+
+                if(req.body.queryResult.parameters.accessCode == "admin123")
+                {
+                    db.db().collection('processes').insertOne(process, (err, result) => {
+                        if(err){
+                            //res.send({'error': 'An Error has occured. Cannot create document for a process.'});
+                            return res.json({
+                                "fulfillmentText": "An Error has occured. Cannot create document for student housing information."
+                            })
+                        } else {
+                            //res.send(result.ops[0]);
+
+                            var processTitle = result.ops[0].processTitle;
+                            var processList = result.ops[0].processList;
+
+
+                            if (req.body.queryResult.parameters.processDate != null)
+                            {
+                                var startDate = result.ops[0].processDate.startDate;
+                                var endDate = result.ops[0].processDate.endDate;
+                                return res.json({
+                                    "fulfillmentText": "Okay, got it! You added a University Process information which is for" +
+                                    processTitle + ". the flow of the process occordingly are: " + processList
+                                   + ". This process will be only valid from " + startDate + " to " + endDate
+                                });
+
+
+                            } else {
+                                return res.json({
+                                    "fulfillmentText": "Okay, got it! You added a University Process information which is for" +
+                                    processTitle + ". the flow of the process occordingly are: " + processList
+                                })
+                            }
+                           
+                        }
+                    })
+                }else 
+                {
+                    //res.send("Sorry I cannot add that, you've got a wrong access code.");
+                    return res.json({
+                        "fulfillmentText":"Sorry I cannot add that, you've got a wrong access code."
+                    });
+                }
+    
+            } else if (req.body.queryResult.parameters.informationType == "housing") {
+                const studentHousing = {informationType: req.body.queryResult.parameters.informationType, 
+                    housingType: req.body.queryResult.parameters.studentHousing,
+                    housingDetails: req.body.queryResult.parameters.housingDetails, 
+                    contactPerson: req.body.queryResult.parameters.contactPerson, 
+                    contactNumber: req.body.queryResult.parameters.contactNumber,
+                    accessCode: req.body.queryResult.parameters.accessCode};
             
-                    if (req.body.accessCode == "admin123" )
+                    if (req.body.queryResult.parameters.accessCode == "admin123" )
                     {
                         db.db().collection('studentHousing').insertOne(studentHousing, (err, result) => {
                             if(err){
-                                res.send({'error': 'An Error has occured. Cannot create document for student housing information.'});
+                                return res.json({
+                                    "fulfillmentText": "An Error has occured. Cannot create document for student housing information."
+                                });
+                              //  res.send({'error': 'An Error has occured. Cannot create document for student housing information.'});
                             }else {
-                                res.send(result.ops[0]);
-                                //NAA PANIY DUGANG FOR OUTPUT
+                                var housingDetails = result.ops[0].housingDetails;
+                                var housingType = result.ops[0].housingType;
+                                var contactPerson = result.ops[0].contactPerson;
+                                var contactNumber = result.ops[0].contactNumber;
+
+                                return res.json({
+                                    "fulfillmentText": "Okay, got it! You added Student Housing information with the following details: " +
+                                    "housing type is a " + housingType + ". The details are " + housingDetails + ". You can contact " + contactPerson + 
+                                    " with his/her phone number " + contactNumber
+                                });
+                               
                             }
                             
                         })
                     }else
                     {
-                        res.send("Sorry I cannot add that, you've got a wrong access code.");
+                        return res.json ({
+                            "fulfillmentText": "Sorry I cannot add that, you've got a wrong access code."
+                        });
+                       // res.send("Sorry I cannot add that, you've got a wrong access code.");
                     }
             }
         
@@ -172,26 +306,34 @@ module.exports = function(app, db) {
                 //res.send("abot diri");
                // const informationType = req.body.informationType;
     
-                if(req.body.informationType == "scholarship")
+                if(req.body.queryResult.parameters.informationType == "scholarship")
                 {
-                        db.db().collection('scholarships').find({}).toArray(function(err, docs){
+                        var scholarshipTitle = req.body.queryResult.parameters.scholarshipTitle;
+                        db.db().collection('scholarships').find({
+                            "scholarshipTitle": { "$regex": scholarshipTitle, "$options": "i" }
+                        }).toArray(function(err, docs){
                             if(err){
-                                handleError(res, err.message, "Failed to get scholarship collection.");
+                                return res.json({
+                                    "fulfillment":"Sorry, failed to get scholarship information"
+                                })
+                                //handleError(res, err.message, "Failed to get scholarship collection.");
                             }else{
                                 res.status(200).json(docs);
                             }
                         });
                         
                 }
-                else if(req.body.informationType == "event")
+                else if(req.body.queryResult.parameters.informationType == "event")
                 {
                     
-                    if((req.body.startDate !== null && req.body.endDate !== null) || req.body.eventLocation !== null)
+                    if((req.body.queryResult.parameters.eventDate != "") || (req.body.eventLocation != "" || req.body.date != ""))
                     {
-                    var dateEventStart = req.body.startDate;
-                    var dateEventEnd = req.body.endDate;
-                    var locationEvent = req.body.eventLocation;
-                    var sampleNi = "2019-12-01T12:00:00+09:00";
+
+                    
+                    var dateEventEnd = req.body.queryResult.parameters.eventDate.endDate;
+                    var dateEventStart = req.body.queryResult.parameters.eventDate.startDate;
+                    var locationEvent = req.body.queryResult.parameters.eventLocation;
+                    var eventDate = req.body.queryResult.parameters.eventDate;
                     
 
                     db.db().collection('events').find({
@@ -212,14 +354,19 @@ module.exports = function(app, db) {
                         if(err){
                             handleError(res, err.message, "Failed to get event collection.");
                         }else{
-                            res.status(200).json(docs);
+                            
+                            res.send(docs.ops[0]);
+
                         }
                     });
                     }
                     
                 }
-                else if(req.body.informationType == "process")
+                else if(req.body.queryResult.parameters.informationType == "process")
                 {
+
+                    
+                        
                     db.db().collection('processes').find({}).toArray(function(err, docs){
                         if(err){
                             handleError(res, err.message, "Failed to get process collection.");
@@ -228,11 +375,11 @@ module.exports = function(app, db) {
                         }
                     });
                 }
-                else if(req.body.informationType == "program")
+                else if(req.body.queryResult.parameters.informationType == "program")
                 {
                     res.send("get/program");
                 }
-                else if(req.body.informationType == "requirements")
+                else if(req.body.queryResult.parameters.informationType == "requirements")
                 {
                     db.db().collection('requirements').find({}).toArray(function(err, docs){
                         if(err){
@@ -242,19 +389,40 @@ module.exports = function(app, db) {
                         }
                     });
                 }
-                else if(req.body.informationType == "organization")
+                else if(req.body.queryResult.parameters.informationType == "organization")
                 {
                     res.send("get/organization");
                 }
-                else if(req.body.informationType == "scholarship")
+                else if(req.body.queryResult.parameters.informationType == "scholarship")
                 {
                     res.send("get/scholarship");
                 }
-                else if(req.body.informationType == "guidelines")
+                else if(req.body.queryResult.parameters.informationType == "guidelines")
                 {
-                    res.send("get/guidelines");
+                    var guidelines = req.body.queryResult.parameters.guidelines;
+                    console.log(guidelines);
+                    db.db().collection('guidelines').find({
+                        "guidelines": { "$regex": guidelines, "$options": "i" }
+                    }).toArray(function(err, docs){
+                        if(err){
+                            return res.json({
+                                "fulfillmentText":"Sorry, failed to get scholarship information"
+                            })
+                            //handleError(res, err.message, "Failed to get scholarship collection.");
+                        }
+                        if (docs != ""){
+
+                            var guidelinesList = docs.guidelinesList;
+                            res.status(200).json(docs);       
+                        } else {
+                            return res.json({
+                                "fulfillmentText": "Sorry, I don't know about that."
+                            });
+                        }
+                        
+                    });
                 }
-                else if(req.body.informationType == "housing")
+                else if(req.body.queryResult.parameters.informationType == "housing")
                 {
                     db.db().collection('/studentHousing').find({}).toArray(function(err, docs){
                         if(err){

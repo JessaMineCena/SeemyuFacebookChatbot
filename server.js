@@ -18,6 +18,8 @@ const port = 8000;
 
 //use body parser cause express cant process urlencoded forms on its own
 app.use(bodyParser.urlencoded({ extended: true }))
+
+app.use(bodyParser.json())
 //import route to the server
 
 
