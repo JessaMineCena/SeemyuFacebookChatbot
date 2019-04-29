@@ -282,11 +282,17 @@ module.exports = function(app, db) {
                                 var contactPerson = result.ops[0].contactPerson;
                                 var contactNumber = result.ops[0].contactNumber;
 
-                                return res.json({
-                                    "fulfillmentText": "Okay, got it! You added Student Housing information with the following details: " +
-                                    "housing type is a " + housingType + ". The details are " + housingDetails + ". You can contact " + contactPerson + 
-                                    " with his/her phone number " + contactNumber
-                                });
+                                let response = " ";
+                                var textResponse = "Okay, got it! You added Student Housing information with the following details: " +
+                                "housing type is a " + housingType + ". The details are " + housingDetails + ". You can contact " + contactPerson + 
+                                " with his/her phone number " + contactNumber;
+
+                                let responseObject ={
+                                    "fulfillmentText": response,
+                                    "fulfillmentMessages": [{"text":{"text": [textResponse]}}],
+                                    "source":""
+                                };
+                                return res.json(responseObject);
                                
                             }
                             
@@ -355,7 +361,8 @@ module.exports = function(app, db) {
                             handleError(res, err.message, "Failed to get event collection.");
                         }else{
                             
-                            res.send(docs.ops[0]);
+                           // res.status(200).json(docs);
+                            res.send(docs[2].eventLocation);
 
                         }
                     });
